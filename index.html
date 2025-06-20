@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Tickets - Reparación de Computadoras</title>
+</head>
+<body>
+  <h1>Registrar Nuevo Ticket</h1>
+  <form id="ticketForm">
+    <label for="cliente">Cliente:</label>
+    <input type="text" id="cliente" name="cliente" required><br><br>
+    <label for="equipo">Equipo:</label>
+    <input type="text" id="equipo" name="equipo" required><br><br>
+    <label for="problema">Problema:</label>
+    <textarea id="problema" name="problema" required></textarea><br><br>
+    <button type="submit">Registrar Ticket</button>
+  </form>
+
+  <h2>Tickets Activos</h2>
+  <table id="ticketsTable" border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Equipo</th>
+        <th>Problema</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Aquí se cargarán los tickets -->
+    </tbody>
+  </table>
+
+  <script>
+    // Función para obtener de forma asíncrona la lista de tickets del servidor.
+    async function fetchTickets() {
+      const response = await fetch('/tickets');
+      const tickets = await response.json();
+      const tbody = document.querySelector('#ticketsTable tbody');
+      tbody.innerHTML = ''; // Vacía la tabla antes de actualizar
+
+      // Iterar sobre los tickets y agregarlos a la tabla
+      tickets.forEach(ticket => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${ticket.id}</td>
+          <td>${ticket.cliente}</td>
+          <td>${ticket.equipo}</td>
+          <td>${ticket.problema}</td>
+          <td>${ticket.estado}</td>
+          <td>
+            <button onclick="deleteTicket(${ticket.id})">Eliminar</button>
+            <button onclick="editTicket(${ticket.id})">Editar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Capturamos el evento submit del formulario para registrar un nuevo ticket.
+    document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); // Evita la recarga de la página
+      const formData = new FormData(e.target);
+      const ticketData = {
+        cliente: formData.get('cliente'),
+        equipo: formData.get('equipo'),
+        problema: formData.get('problema')
+      };
+
+      // Enviar petición POST al endpoint '/tickets'
+      await fetch('/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketData)
+      });
+
+      // Actualizar la lista y reiniciar el formulario
+      fetchTickets();
+      e.target.reset();
+    });
+
+    // Función para eliminar un ticket enviando una petición DELETE
+    async function deleteTicket(id) {
+      await fetch(`/tickets/${id}`, {
+        method: 'DELETE'
+      });
+      fetchTickets();
+    }
+
+    // Función para editar un ticket. Aquí se puede implementar la lógica de cargar datos en un formulario.
+    function editTicket(id) {
+      alert('Implementa la lógica de edición para el ticket: ' + id);
+    }
+
+    // Cargar la lista de tickets al iniciar la página
+    fetchTickets();
+  </script>
+</body>
+</html>
